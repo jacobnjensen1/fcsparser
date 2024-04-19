@@ -380,27 +380,77 @@ class FCSParser(object):
         # Extract channel names and convert some of the channel properties
         # and other fields into numeric data types (from string)
         # Note: do not use regular expressions for manipulations here.
-        # Regular expressions are too heavy in terms of computation time.
-        pars = int(text["$PAR"])
-        if (
-            "$P0B" in text.keys()
-        ):  # Checking whether channel number count starts from 0 or from 1
-            self.channel_numbers = range(0, pars)  # Channel number count starts from 0
-        else:
-            self.channel_numbers = range(1, pars + 1)  # Channel numbers start from 1
+        # Regular expressions are too heavy in terms of computation time
+        #pars = int(text["$PAR"])
+        #if (
+        #    "$P0B" in text.keys()
+        #):  # Checking whether channel number count starts from 0 or from 1
+        #    self.channel_numbers = range(0, pars)  # Channel number count starts from 0
+        #else:
+        #    self.channel_numbers = range(1, pars + 1)  # Channel numbers start from 1
 
-        
+        #This may be too restrictive, but my testing says it should work.
+        #This may only work for jacobnjensen1's data though.
+        #With some of jacobnjensen1's data, there are duplicate parameters
+        #these have the same $PnS, but x-A vs x.A in $PnN
+        #I want to prioritize x.A parameters
+        #This is too niche a change for a pull request, I think
+
+        #self.channel_numbers = []
+        temp_channel_numbers = []
+        for key in text.keys():
+            if key.startswith("$P") and key.endswith("B"):
+                #self.channel_numbers.append(int(key[2:-1]))
+                temp_channel_numbers.append(int(key[2:-1]))
+
+
         # Extract parameter names
         channel_names_n = []
         channel_names_s = []
-        for channel_number in self.channel_numbers:
+        duplicate_names_s = []
+        for channel_number in temp_channel_numbers:
             n_key = f'$P{channel_number}N'
             s_key = f'$P{channel_number}S'
             name_n = text.get(n_key, "")
             name_s = text.get(s_key, "")
             
             channel_names_n.append(name_n)
-            channel_names_s.append(name_s if name_s != "" else name_n)
+            if name_s != "":
+                if name_s in channel_names_s:
+                    duplicate_names_s.append(name_s)
+                    channel_names_s.append(name_s)
+                else:
+                    channel_names_s.append(name_s)
+            else:
+                if name_n in channel_names_s:
+                    duplicate_names_s.append(name_n)
+                    channel_names_s.append(name_n)
+                else:
+                    channel_names_s.append(name_n)
+            #channel_names_s.append(name_s if name_s != "" else name_n)
+
+        zipped_channel_identifiers = list(zip(temp_channel_numbers, channel_names_n, channel_names_s))
+        for duplicate_name_s in duplicate_names_s:
+            channels_with_name = [
+                subset for subset in zipped_channel_identifiers if subset[2] == duplicate_name_s
+            ]
+            channel_to_remove = [
+                channel for channel in channels_with_name if channel[1][-2] == "-"
+            ][0] #Yes, this is ugly, but it selects the one with a dash in $PnN
+
+            #removing isn't safe because all of data is read.
+            #remove_index = temp_channel_numbers.index(channel_to_remove[0])
+            #temp_channel_numbers.pop(remove_index)
+            #channel_names_n.pop(remove_index)
+            #channel_names_s.pop(remove_index)
+
+            remove_index = temp_channel_numbers.index(channel_to_remove[0])
+            channel_names_s[remove_index] += "_With-"
+
+        self.channel_numbers = temp_channel_numbers
+
+        print(tuple(channel_names_n))
+        print(tuple(channel_names_s))
 
         self.channel_names_n = tuple(channel_names_n)
         self.channel_names_s = tuple(channel_names_s)

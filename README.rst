@@ -1,21 +1,15 @@
 FCSParser
 =================
 
+This is forked from https://github.com/eyurtsev/fcsparser, obviously. Consult the README and documentation there.
+This fork allows for arbitrary parameter numbering instead of assuming sequential numbering.
 
 fcsparser is a python package for reading fcs files. 
-
-.. image:: https://github.com/eyurtsev/kor/actions/workflows/test.yml/badge.svg?branch=main&event=push   
-   :target: https://github.com/eyurtsev/kor/actions/workflows/test.yml
-   :alt: Unit Tests
 
 Install
 ==================
 
-    $ pip install fcsparser
-    
-or
-    
-    $ conda install -c bioconda fcsparser
+Install this fork using git clone, not conda or pip.
 
 Using
 ==================
@@ -25,30 +19,6 @@ Using
     >>> meta, data = fcsparser.parse(path, reformat_meta=True)
 
 A more detailed example can be found here: https://github.com/eyurtsev/fcsparser/blob/master/doc/fcsparser_example.ipynb
-
-Features
-===================
-
-- **python**: 3.8, 3.9, 3.10, 3.11
-- **FCS Formats**: Supports FCS 2.0, 3.0, and 3.1
-- **FCS Machines**: BD FACSCalibur, BD LSRFortessa, BD LSR-II, MiltenyiBiotec MACSQuant VYB, Sony SH800
-
-Contributing
-=================
-
-Pull requests are greatly appreciated. Missing features include:
-
-1. the ability to apply compensation.
-2. a set of transformations (hlog, logicle, etc.) that can be applied.
-
-Also fcs files from more devices and more formats are greatly appreciated, especially if the parser fails for them!
-
-Resources
-==================
-
-- **Documentation:** https://github.com/eyurtsev/fcsparser
-- **Source Repository:** https://github.com/eyurtsev/fcsparser
-- **Comments or questions:** https://github.com/eyurtsev/fcsparser/issues
 
 LICENSE
 ===================
