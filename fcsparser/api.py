@@ -2,6 +2,9 @@
 
 Distributed under the MIT License.
 
+This was forked from https://github.com/eyurtsev/fcsparser.
+Consult https://github.com/jacobnjensen1/fcsparser.
+
 Useful documentation for dtypes in numpy
 http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.byteswap.html?highlight=byteswap#numpy.ndarray.byteswap
 http://docs.scipy.org/doc/numpy/user/basics.types.html
@@ -435,7 +438,7 @@ class FCSParser(object):
                 subset for subset in zipped_channel_identifiers if subset[2] == duplicate_name_s
             ]
             channel_to_remove = [
-                channel for channel in channels_with_name if channel[1][-2] == "-"
+                channel for channel in channels_with_name if channel[1][-2] == "."
             ][0] #Yes, this is ugly, but it selects the one with a dash in $PnN
 
             #removing isn't safe because all of data is read.
@@ -445,12 +448,12 @@ class FCSParser(object):
             #channel_names_s.pop(remove_index)
 
             remove_index = temp_channel_numbers.index(channel_to_remove[0])
-            channel_names_s[remove_index] += "_With-"
+            channel_names_s[remove_index] += "_With."
 
         self.channel_numbers = temp_channel_numbers
 
-        print(tuple(channel_names_n))
-        print(tuple(channel_names_s))
+        #print(tuple(channel_names_n))
+        #print(tuple(channel_names_s))
 
         self.channel_names_n = tuple(channel_names_n)
         self.channel_names_s = tuple(channel_names_s)
@@ -823,4 +826,16 @@ def parse(
     else:  # Then include both meta and dataframe.
         df = fcs_parser.dataframe
         df = df.astype(dtype) if dtype else df
+
+        #jacobnjensen1: Some fcs files I use have additional column names that mess with df.columns
+        #These will be aparent if "_With." appears in any column names.
+        #If one is present, the colnames should be the first <num_cols> $PnS (or $PnN, but I'm not implementing that.)
+        if len([column for column in df.columns if "_With." in column]) > 0:
+            warnings.warn("WARNING: shenanigans appear to have occured in df.columns. Column names are being re-assigned **which may be incorrect!**", RuntimeWarning)
+            s_names = [(key,value) for key,value in meta.items() if (key.startswith("$P") and key.endswith("S"))]
+            s_names.sort(key=lambda item: int(item[0][2:-1]))
+            s_names = [item[1] for item in s_names[:len(df.columns)]]
+            name_mapping = dict(zip(df.columns, s_names))
+            df.rename(columns=name_mapping, inplace=True)
+
         return meta, df
