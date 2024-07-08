@@ -399,13 +399,20 @@ class FCSParser(object):
         #I want to prioritize x.A parameters
         #This is too niche a change for a pull request, I think
 
+        #UPDATE: this breaks with files exported from FCSExpress, *sometimes*
+        #I'm pretty sure this breaks because there are more than 10 channels in the recent data.
+        #It only worked before because I was only testing on files with exactly the channels I needed (<10)
+
+        #possible solution: If there are no duplicates(?) in the basenames of $PnN, sort numerically
+        #                   I think duplicates don't matter for this, I think it's just a sorting issue.
+        #best solution: remake all of the old files with improper headers and switch back to standard fcsparser!
+
         #self.channel_numbers = []
         temp_channel_numbers = []
         for key in text.keys():
             if key.startswith("$P") and key.endswith("B"):
                 #self.channel_numbers.append(int(key[2:-1]))
                 temp_channel_numbers.append(int(key[2:-1]))
-
 
         # Extract parameter names
         channel_names_n = []
@@ -431,6 +438,21 @@ class FCSParser(object):
                 else:
                     channel_names_s.append(name_n)
             #channel_names_s.append(name_s if name_s != "" else name_n)
+
+        #print(temp_channel_numbers)
+        #print(channel_names_n)
+        #print(channel_names_s)
+
+        #sort temp_channel_numbers numerically, rearrange channel_names_[ns] in the same way
+        #sorting method suggested by https://stackoverflow.com/a/9764364
+        temp_channel_numbers, channel_names_n, channel_names_s = zip(*sorted(zip(temp_channel_numbers, channel_names_n, channel_names_s)))
+        temp_channel_numbers = list(temp_channel_numbers)
+        channel_names_n = list(channel_names_n)
+        channel_names_s = list(channel_names_s)
+
+        #print(temp_channel_numbers)
+        #print(channel_names_n)
+        #print(channel_names_s)
 
         zipped_channel_identifiers = list(zip(temp_channel_numbers, channel_names_n, channel_names_s))
         for duplicate_name_s in duplicate_names_s:
